@@ -240,6 +240,21 @@ export interface ThemeCustomColors {
   gold: string;
 }
 
+export type WebDavSyncStatus = 'success' | 'error';
+
+export interface WebDavSettings {
+  enabled: boolean;
+  url: string; // Base WebDAV URL, e.g. https://cloud.example.com/remote.php/dav/files/me
+  username: string;
+  folder: string; // Remote folder under url, e.g. "Spix"
+  autoSync: boolean; // Sync when the app comes to the foreground (rate-limited)
+  includePersonalInfo: boolean; // Add gender, age, height, body weight to the AI files
+  includeFullBackup: boolean; // Also upload the full restorable JSON backup
+  lastSyncAt?: string; // ISO date of the last attempt
+  lastSyncStatus?: WebDavSyncStatus;
+  lastSyncError?: string; // Technical error detail from the last failed attempt
+}
+
 export interface UserSettings {
   weeklyGoal: number; // Nombre de séances sport par semaine (défaut: 4)
   units: {
@@ -322,6 +337,8 @@ export interface UserSettings {
   debugTracking?: boolean; // Show tracking points overlay
   // Safety check defaults and contacts
   safety?: SafetySettings;
+  // WebDAV sync of AI-readable stats (password lives in SecureStore, not here)
+  webdav?: WebDavSettings;
 }
 
 // ============================================================================

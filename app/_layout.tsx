@@ -1,7 +1,7 @@
 import { Slot, usePathname, useRouter, useRootNavigationState, useSegments } from 'expo-router';
 import React, { useEffect } from 'react';
 import { useSettings, useSocialStore } from '../src/stores';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, AppState } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -10,6 +10,7 @@ import { LayoutDashboard, Dumbbell, ChartBar, Wrench, Settings, Trophy, Users } 
 import { Colors, Spacing, applyThemeFromUserSettings } from '../src/constants';
 import { ErrorBoundary } from '../src/components';
 import * as NotificationService from '../src/services/notifications';
+import { maybeAutoSyncWebDav } from '../src/services/webdav';
 
 // Initialize i18n
 import '../src/i18n';
@@ -169,6 +170,17 @@ export default function Layout() {
     useEffect(() => {
         applyThemeFromUserSettings(settings);
     }, [settings.themePreset, settings.customThemeColors]);
+
+    // WebDAV auto sync of AI stats: on launch and each time the app returns to the foreground (rate-limited)
+    useEffect(() => {
+        void maybeAutoSyncWebDav();
+        const subscription = AppState.addEventListener('change', (state) => {
+            if (state === 'active') {
+                void maybeAutoSyncWebDav();
+            }
+        });
+        return () => subscription.remove();
+    }, []);
 
     useEffect(() => {
         const subscription = NotificationService.addNotificationResponseListener((response: NotificationResponseLike) => {

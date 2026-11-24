@@ -129,3 +129,29 @@ export const MAX_USERNAME_LENGTH = 20;
 
 /** Longueur minimum du mot de passe */
 export const MIN_PASSWORD_LENGTH = 6;
+
+// ============================================================================
+// WEBDAV SYNC (AI stats export)
+// ============================================================================
+
+/** Minimum time between two automatic WebDAV syncs when the app comes to the foreground (ms) */
+export const WEBDAV_AUTO_SYNC_MIN_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+/** Timeout for one WebDAV request (ms); uploads can be larger than API calls */
+export const WEBDAV_REQUEST_TIMEOUT_MS = 30000;
+
+/** Default remote folder (relative to the WebDAV URL) */
+export const WEBDAV_DEFAULT_FOLDER = 'Spix';
+
+/** Remote file names written on each sync */
+export const WEBDAV_FILES = {
+    stats: 'spix-ai-stats.json',
+    summary: 'spix-ai-summary.md',
+    backup: 'spix-backup.json',
+} as const;
+
+/** Number of past weeks summarised in the AI stats export (current week included) */
+export const AI_EXPORT_WEEKS = 12;
+
+/** Number of past days whose entries are listed one by one in the AI stats export */
+export const AI_EXPORT_DETAIL_DAYS = 90;

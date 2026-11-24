@@ -53,8 +53,9 @@ None known.
 ## Open issues & backlog
 - [ ] Include all user settings (except secrets) in the backup (issue)
 - [ ] Expose archiving in the UI or remove the unused code (issue)
-- [ ] Automatic periodic backup to a user-chosen folder (idea)
+- [ ] Automatic periodic backup to a user-chosen folder (idea; F-020 can upload the full backup to WebDAV)
 - [ ] CSV export (idea)
 
 ## Log
 - 2026-11-24: backfilled
+- 2026-11-24: F-020 reuses `generateFullBackup` for its optional WebDAV backup upload
