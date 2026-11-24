@@ -116,6 +116,7 @@ export const SettingsSchema = z.object({
     units: UnitsSchema.optional(),
     hiddenTabs: HiddenTabsSchema.optional(),
     aiFeaturesEnabled: z.boolean().optional(),
+    aiDebugEnabled: z.boolean().optional(),
     debugCamera: z.boolean().optional(),
     preferCameraDetection: z.boolean().optional(),
     debugPlank: z.boolean().optional(),

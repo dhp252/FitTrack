@@ -48,6 +48,7 @@ import { useGamificationStore } from '../../src/stores';
 import { formatDisplayDate, getRelativeTime, isInCurrentWeek } from '../../src/utils/date';
 import { generateTextAnalysis } from '../../src/services/pollination/textAnalysis';
 import { isPollinationConnected } from '../../src/services/pollination';
+import { AiDebugPanel, AiExpandButton, AiTextReader } from '../../src/components/ai';
 import i18n from '../../src/i18n';
 import { Colors, ScreenPalettes } from '../../src/constants';
 import { styles } from './_workout-detail.styles';
@@ -145,6 +146,7 @@ export default function WorkoutDetailScreen() {
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(false);
+  const [aiReaderOpen, setAiReaderOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [showRepInsights, setShowRepInsights] = useState(true);
@@ -360,6 +362,7 @@ export default function WorkoutDetailScreen() {
       const userPrompt = `Here are the pre-calculated statistics for this workout session:\n\n${statsLines.join('\n')}\n\nProvide a brief analysis: what went well, areas for improvement, and a motivational tip for the next session of this type. Be specific about the numbers provided.`;
 
       const result = await generateTextAnalysis({
+        feature: 'workout-analysis',
         systemPrompt,
         userPrompt,
         model: settings.aiModel || 'openai',
@@ -942,13 +945,16 @@ export default function WorkoutDetailScreen() {
                 <Text style={styles.aiTitle}>{t('workout.ai.title')}</Text>
               </View>
               {aiAnalysis && !aiLoading && !aiError && (
-                <TouchableOpacity
-                  onPress={() => fetchAnalysis(true)}
-                  style={styles.regenBtn}
-                  accessibilityLabel={t('workout.ai.regenerate')}
-                >
-                  <RefreshCw size={18} color={C.violet} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: S.sm }}>
+                  <AiExpandButton onPress={() => setAiReaderOpen(true)} color={C.violet} />
+                  <TouchableOpacity
+                    onPress={() => fetchAnalysis(true)}
+                    style={styles.regenBtn}
+                    accessibilityLabel={t('workout.ai.regenerate')}
+                  >
+                    <RefreshCw size={18} color={C.violet} />
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
 
@@ -966,8 +972,19 @@ export default function WorkoutDetailScreen() {
                 <Text style={styles.aiDisabledText}>{t('workout.ai.error')}</Text>
               </View>
             ) : aiAnalysis ? (
-              <Text style={styles.aiText}>{aiAnalysis}</Text>
+              <TouchableOpacity activeOpacity={0.8} onPress={() => setAiReaderOpen(true)}>
+                <Text style={styles.aiText}>{aiAnalysis}</Text>
+              </TouchableOpacity>
             ) : null}
+            <AiDebugPanel feature="workout-analysis" />
+            {aiAnalysis && (
+              <AiTextReader
+                visible={aiReaderOpen}
+                title={t('workout.ai.title')}
+                text={aiAnalysis}
+                onClose={() => setAiReaderOpen(false)}
+              />
+            )}
           </Animated.View>
         )}
 

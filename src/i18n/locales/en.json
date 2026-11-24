@@ -1132,7 +1132,18 @@
         "coaching": "Contextual advice to maintain consistency and improve recovery."
       },
       "disabledChip": "Disabled",
-      "statusBadge": "PAUSE"
+      "statusBadge": "PAUSE",
+      "masterToggle": "Enable AI features",
+      "masterToggleDesc": "Master switch for every Ploppy feature. Uses your own Pollinations account.",
+      "masterOffHint": "Turn on \"Enable AI features\" above first.",
+      "toggleMeal": "AI meal photo score",
+      "toggleMealDesc": "Score meal photos on the enhanced meal page",
+      "debugTitle": "Debug",
+      "debugToggle": "AI debug mode",
+      "debugToggleDesc": "Record each AI request, answer and error on this device so you can see what went wrong. Kept in memory only, keys hidden.",
+      "debugOpen": "Open AI debug log",
+      "debugCount_one": "{{count}} call recorded",
+      "debugCount_other": "{{count}} calls recorded"
     },
     "pollination": {
       "sectionTitle": "AI ANALYSIS",
@@ -2201,7 +2212,8 @@
       "suggestion1": "Easy 30 min run",
       "suggestion2": "Interval 5K",
       "suggestion3": "Long run",
-      "step3Title": "Your running plan"
+      "step3Title": "Your running plan",
+      "fallbackPlanNotice": "The AI did not answer, so this is a basic built-in plan. Turn on AI debug mode in Settings → AI to see why."
     },
     "ready": "Ready",
     "motivation": {
@@ -2468,6 +2480,41 @@
       "run": "Run",
       "beatsaber": "Beat Saber",
       "custom": "Custom sport"
+    }
+  },
+  "ai": {
+    "reader": {
+      "expand": "Full screen",
+      "copy": "Copy text"
+    },
+    "debug": {
+      "title": "AI debug log",
+      "hint": "Newest first. Cleared when the app restarts. API keys are replaced by [redacted]. Tap a call to see the exact request and answer; Copy gives you text you can paste into a bug report.",
+      "empty": "No AI calls recorded yet. Run an AI feature with debug mode on.",
+      "noCallYet": "Debug: no AI call yet",
+      "open": "Details",
+      "endpoint": "Endpoint",
+      "request": "Request",
+      "response": "Response",
+      "noResponse": "(no response received)",
+      "copy": "Copy",
+      "copied": "Copied",
+      "clear": "Clear log",
+      "cached": "from cache",
+      "status": {
+        "pending": "running",
+        "success": "OK",
+        "error": "failed"
+      },
+      "features": {
+        "weekly-summary": "Weekly summary",
+        "workout-analysis": "Workout analysis",
+        "run-plan-questions": "Run plan: questions",
+        "run-plan": "Run plan",
+        "run-coach": "Run coaching",
+        "run-debrief": "Run debrief",
+        "meal-photo": "Meal photo score"
+      }
     }
   }
 }

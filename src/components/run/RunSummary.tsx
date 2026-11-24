@@ -42,6 +42,7 @@ import {
 import { generateGPX, saveGPXFile } from '../../services/gpxExport';
 import { generateTextAnalysis } from '../../services/pollination/textAnalysis';
 import { isPollinationConnected } from '../../services/pollination';
+import { AiDebugPanel, AiExpandButton, AiTextReader } from '../ai';
 import i18n from '../../i18n';
 import type { RunEntry } from '../../types';
 
@@ -126,6 +127,7 @@ export function RunSummary() {
   const runSettings = settings as { runSettings?: { coachingEnabled?: boolean; pollinationsModel?: string } };
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiReaderOpen, setAiReaderOpen] = useState(false);
   const [discardModalVisible, setDiscardModalVisible] = useState(false);
 
   const summary = useMemo(() => {
@@ -179,6 +181,7 @@ export function RunSummary() {
       try {
         const lang = ({ fr: 'français', it: 'italiano', de: 'Deutsch' } as Record<string, string>)[i18n.language] ?? 'English';
         const result = await generateTextAnalysis({
+          feature: 'run-debrief',
           systemPrompt: `Tu es Ploppy, coach de course bienveillant. Fais un bilan court (3-4 phrases) en ${lang}.`,
           userPrompt: `Bilan de course :
 - Distance : ${summary.distanceKm.toFixed(2)} km
@@ -320,15 +323,29 @@ Donne un bilan motivant et personnalisé.`,
             <Animated.View entering={FadeInDown.delay(400)} style={[styles.card, { borderColor: C.violetBorder }]}>
               <View style={styles.aiHeader}>
                 <Bot size={16} color={C.violet} />
-                <Text style={[styles.sectionTitle, { color: C.violet, marginBottom: 0 }]}>
+                <Text style={[styles.sectionTitle, { color: C.violet, marginBottom: 0, flex: 1 }]}>
                   {t('run.summary.aiSummary')}
                 </Text>
+                {aiSummary && !aiLoading && (
+                  <AiExpandButton onPress={() => setAiReaderOpen(true)} color={C.violet} />
+                )}
               </View>
               {aiLoading ? (
                 <ActivityIndicator color={C.violet} style={{ marginVertical: S.md }} />
               ) : aiSummary ? (
-                <Text style={styles.aiText}>{aiSummary}</Text>
+                <TouchableOpacity activeOpacity={0.8} onPress={() => setAiReaderOpen(true)}>
+                  <Text style={styles.aiText}>{aiSummary}</Text>
+                </TouchableOpacity>
               ) : null}
+              <AiDebugPanel feature="run-debrief" />
+              {aiSummary && (
+                <AiTextReader
+                  visible={aiReaderOpen}
+                  title={t('run.summary.aiSummary')}
+                  text={aiSummary}
+                  onClose={() => setAiReaderOpen(false)}
+                />
+              )}
             </Animated.View>
           )}
 
@@ -423,7 +440,7 @@ const styles = StyleSheet.create({
   vsResultText: { fontSize: T.md, fontWeight: W.bold, color: C.text, textAlign: 'center' },
 
   aiHeader: { flexDirection: 'row', alignItems: 'center', gap: S.sm, marginBottom: S.md },
-  aiText: { fontSize: T.sm, color: C.text, lineHeight: 22 },
+  aiText: { fontSize: T.lg, color: C.text, lineHeight: T.lg * 1.6 },
 
   actions: { marginTop: S.lg, gap: S.md },
   saveBtn: {

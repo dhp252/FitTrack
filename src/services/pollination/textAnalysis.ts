@@ -5,8 +5,9 @@
 
 import { getPollinationApiKey } from './index';
 import { fetchWithRetry, getOrSetMemoryCache } from '../network/httpClient';
+import { AI_REQUEST_TIMEOUT_MS } from '../../constants/values';
+import { beginAiDebugCall, completeAiDebugCall, noteAiDebug, type AiFeatureId } from './aiDebugLog';
 
-const POLLINATION_TEXT_URL = 'https://text.pollinations.ai/';
 const TEXT_ANALYSIS_CACHE_TTL_MS = 2 * 60 * 1000;
 
 function hashText(input: string): string {
@@ -41,7 +42,11 @@ export type PollinationModelId = typeof POLLINATION_MODELS[number]['id'];
 // TEXT GENERATION
 // ============================================================================
 
+const POLLINATION_CHAT_URL = 'https://gen.pollinations.ai/v1/chat/completions';
+
 interface TextGenerationOptions {
+  /** Which app feature is asking; shown in the AI debug log */
+  feature: AiFeatureId;
   systemPrompt: string;
   userPrompt: string;
   model?: string;
@@ -49,9 +54,11 @@ interface TextGenerationOptions {
 
 /**
  * Generate text using Pollinations text API
- * Uses the /v1/chat/completions endpoint with model selection
+ * Uses the /v1/chat/completions endpoint with model selection.
+ * Every call is recorded in the AI debug log when debug mode is on.
  */
 export const generateTextAnalysis = async ({
+  feature,
   systemPrompt,
   userPrompt,
   model = 'openai',
@@ -65,37 +72,69 @@ export const generateTextAnalysis = async ({
     headers['Authorization'] = `Bearer ${apiKey}`;
   }
 
-  const cacheKey = `pollination:text:${model}:${hashText(systemPrompt)}:${hashText(userPrompt)}`;
+  const body = {
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+  };
 
-  return getOrSetMemoryCache(cacheKey, TEXT_ANALYSIS_CACHE_TTL_MS, async () => {
-    const response = await fetchWithRetry('https://gen.pollinations.ai/v1/chat/completions', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-      }),
-    }, {
-      timeoutMs: 20000,
-      retries: 1,
-      retryDelayMs: 800,
+  const debugId = beginAiDebugCall({
+    feature,
+    model,
+    endpoint: POLLINATION_CHAT_URL,
+    request: body,
+    secrets: [apiKey],
+  });
+  if (!apiKey) {
+    noteAiDebug(feature, 'No Pollinations API key stored: request sent without authentication', false);
+  }
+
+  const cacheKey = `pollination:text:${model}:${hashText(systemPrompt)}:${hashText(userPrompt)}`;
+  let fromNetwork = false;
+
+  try {
+    const content = await getOrSetMemoryCache(cacheKey, TEXT_ANALYSIS_CACHE_TTL_MS, async () => {
+      fromNetwork = true;
+      const response = await fetchWithRetry(POLLINATION_CHAT_URL, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      }, {
+        timeoutMs: AI_REQUEST_TIMEOUT_MS,
+        retries: 1,
+        retryDelayMs: 800,
+      });
+
+      const rawText = await response.text();
+      completeAiDebugCall(debugId, {
+        status: response.ok ? 'success' : 'error',
+        httpStatus: response.status,
+        response: rawText,
+        secrets: [apiKey],
+      });
+
+      if (!response.ok) {
+        throw new Error(`Pollinations API error: ${response.status} - ${rawText}`);
+      }
+
+      const data = JSON.parse(rawText) as { choices?: Array<{ message?: { content?: string } }> };
+      const text = data.choices?.[0]?.message?.content;
+
+      if (!text) {
+        throw new Error('No response from Pollinations API');
+      }
+
+      return text.trim();
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Pollinations API error: ${response.status} - ${errorText}`);
+    if (!fromNetwork) {
+      completeAiDebugCall(debugId, { status: 'success', cached: true, response: content });
     }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-
-    if (!content) {
-      throw new Error('No response from Pollinations API');
-    }
-
-    return content.trim();
-  });
+    return content;
+  } catch (error) {
+    completeAiDebugCall(debugId, { status: 'error', error, secrets: [apiKey] });
+    throw error;
+  }
 };

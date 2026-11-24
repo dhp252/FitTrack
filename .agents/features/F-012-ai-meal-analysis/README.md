@@ -26,7 +26,7 @@ An alternative meal page enabled from Labs. The user takes or picks a photo of a
 - Tests: none.
 
 ## How to run & test
-- Run: Settings → Labs → enable the enhanced meal page and Ploppy meal analysis (needs F-011 connected).
+- Run: Settings → Labs → enable the enhanced meal page; Settings → AI → enable AI and "AI meal photo score" (needs F-011 connected).
 - Test: no automated tests.
 
 ## Limits
@@ -56,3 +56,4 @@ An alternative meal page enabled from Labs. The user takes or picks a photo of a
 
 ## Log
 - 2026-11-24: backfilled
+- 2026-11-24: larger description/suggestions text and a full-screen reader; upload and parse failures recorded in the AI debug log (F-011); the error alert includes the real error when debug mode is on. Enable it from Settings → AI → "AI meal photo score".

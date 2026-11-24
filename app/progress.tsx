@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { getMonthName } from '../src/utils/date';
 import { generateTextAnalysis } from '../src/services/pollination/textAnalysis';
 import { isPollinationConnected } from '../src/services/pollination';
+import { AiDebugPanel, AiExpandButton, AiTextReader } from '../src/components/ai';
 import i18n from '../src/i18n';
 import type { MeasureEntry, HomeWorkoutEntry, RunEntry, Entry } from '../src/types';
 import { Colors } from '../src/constants';
@@ -477,6 +478,7 @@ function PloppyWeeklySummary({ entries, settings }: {
 }) {
     const { t } = useTranslation();
     const [analysis, setAnalysis] = useState<string | null>(null);
+    const [readerOpen, setReaderOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
     const [connected, setConnected] = useState(false);
@@ -524,6 +526,7 @@ function PloppyWeeklySummary({ entries, settings }: {
             const userPrompt = `Here are my pre-calculated weekly stats:\n\n${statsLines.join('\n')}\n\nWrite a brief, motivating weekly summary. Mention specific numbers. End with one tip for next week.`;
 
             const result = await generateTextAnalysis({
+                feature: 'weekly-summary',
                 systemPrompt,
                 userPrompt,
                 model: settings.aiModel || 'openai',
@@ -597,13 +600,16 @@ function PloppyWeeklySummary({ entries, settings }: {
                 color={C.violet}
               />
               {analysis && !loading && !error && (
-                <TouchableOpacity
-                  onPress={() => fetchSummary(true)}
-                  style={ploppyStyles.regenBtn}
-                  accessibilityLabel={t('progress.ai.regenerate')}
-                >
-                  <RefreshCw size={16} color={C.violet} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: S.sm }}>
+                  <AiExpandButton onPress={() => setReaderOpen(true)} color={C.violet} />
+                  <TouchableOpacity
+                    onPress={() => fetchSummary(true)}
+                    style={ploppyStyles.regenBtn}
+                    accessibilityLabel={t('progress.ai.regenerate')}
+                  >
+                    <RefreshCw size={16} color={C.violet} />
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
             {loading ? (
@@ -614,8 +620,19 @@ function PloppyWeeklySummary({ entries, settings }: {
             ) : error ? (
                 <Text style={ploppyStyles.errorText}>{t('progress.ai.error')}</Text>
             ) : analysis ? (
-                <Text style={ploppyStyles.analysisText}>{analysis}</Text>
+                <TouchableOpacity activeOpacity={0.8} onPress={() => setReaderOpen(true)}>
+                    <Text style={ploppyStyles.analysisText}>{analysis}</Text>
+                </TouchableOpacity>
             ) : null}
+            <AiDebugPanel feature="weekly-summary" />
+            {analysis && (
+                <AiTextReader
+                    visible={readerOpen}
+                    title={t('progress.ai.title')}
+                    text={analysis}
+                    onClose={() => setReaderOpen(false)}
+                />
+            )}
         </CardWrap>
     );
 }
@@ -627,7 +644,7 @@ const ploppyStyles = StyleSheet.create({
     loadingRow: { flexDirection: 'row', alignItems: 'center', gap: S.sm, paddingVertical: S.sm },
     loadingText: { fontSize: T.sm, color: C.textMuted },
     errorText: { fontSize: T.sm, color: C.error },
-    analysisText: { fontSize: T.sm, color: C.textSub, lineHeight: T.sm * 1.7, fontStyle: 'italic' },
+    analysisText: { fontSize: T.lg, color: C.text, lineHeight: T.lg * 1.6 },
 });
 
 // ─── Shared Card Wrappers ─────────────────────────────────────────────────────

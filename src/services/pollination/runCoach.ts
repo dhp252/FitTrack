@@ -94,7 +94,7 @@ Si l'allure est bonne, encourage à tenir.
 Varie le style, ne répète pas les derniers messages.
 Réponds UNIQUEMENT avec le texte du message, sans JSON, sans guillemets.`;
 
-  return generateTextAnalysis({ systemPrompt, userPrompt, model });
+  return generateTextAnalysis({ feature: 'run-coach', systemPrompt, userPrompt, model });
 }
 
 // ============================================================================
