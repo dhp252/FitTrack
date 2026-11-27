@@ -28,6 +28,7 @@ import {
   Heart,
   Trash2,
   ChevronRight,
+  CloudUpload,
 } from 'lucide-react-native';
 import { GlassCard, ExportModal, CustomAlertModal, type AlertType, type AlertButton } from '../../src/components/ui';
 import { useAppStore, useGamificationStore } from '../../src/stores';
@@ -485,6 +486,19 @@ export default function DataScreen() {
             subtitle={t('settings.exportDataDesc')}
             onPress={() => setExportModalVisible(true)}
             delay={160}
+          />
+        </GlassCard>
+
+        {/* WebDAV sync for an external AI assistant */}
+        <SectionTitle title={t('settings.webdav.sectionTitle')} delay={170} />
+        <GlassCard style={styles.settingsCard}>
+          <SettingItem
+            icon={<CloudUpload size={20} color={Colors.violet} />}
+            iconColor={Colors.violet}
+            title={t('settings.webdav.title')}
+            subtitle={t('settings.webdav.entryDesc')}
+            onPress={() => router.push('/settings/webdav')}
+            delay={175}
           />
         </GlassCard>
 

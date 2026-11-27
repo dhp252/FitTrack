@@ -27,3 +27,4 @@ Line format: `- F-<nnn> · <status> · [backfill · ]<one-line summary> → [F-<
 - F-017 · shipped · backfill · Full JSON backup and restore, JSON workout import, reset → [F-017-data-backup](F-017-data-backup/README.md)
 - F-018 · shipped · backfill · First-launch flow for goal, level and weekly target → [F-018-onboarding](F-018-onboarding/README.md)
 - F-019 · shipped · backfill · Theme presets, custom palette, hidden tabs, language (en/fr/de/it) → [F-019-appearance-language](F-019-appearance-language/README.md)
+- F-020 · building · Upload AI-readable stats (JSON + Markdown) to the user's WebDAV server → [F-020-webdav-ai-sync](F-020-webdav-ai-sync/README.md)
