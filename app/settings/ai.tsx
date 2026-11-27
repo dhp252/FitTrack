@@ -1,8 +1,8 @@
 // ============================================================================
-// SETTINGS - AI SUB-SCREEN (temporarily locked)
+// SETTINGS - AI SUB-SCREEN (Pollinations connection, features, debug)
 // ============================================================================
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,392 +10,518 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   Bot,
-  Lock,
   Sparkles,
-  Footprints,
-  Dumbbell,
-  UtensilsCrossed,
+  ExternalLink,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  ChevronDown,
   Activity,
-  Heart,
+  Shield,
+  Info,
+  UtensilsCrossed,
+  Bug,
+  Power,
 } from 'lucide-react-native';
 import { GlassCard } from '../../src/components/ui';
+import { AiDebugModal } from '../../src/components/ai';
 import { useAppStore } from '../../src/stores';
-import { useTranslation } from 'react-i18next';
+import {
+  isPollinationConnected,
+  startPollinationAuth,
+  removePollinationApiKey,
+} from '../../src/services/pollination';
+import { POLLINATION_MODELS } from '../../src/services/pollination/textAnalysis';
+import { useAiDebugStore } from '../../src/services/pollination/aiDebugLog';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../src/constants';
 
-interface LockedFeature {
-  id: string;
-  title: string;
-  description: string;
+interface ToggleRowProps {
   icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+  disabled?: boolean;
+  activeColor?: string;
+}
+
+function ToggleRow({ icon, title, subtitle, value, onValueChange, disabled, activeColor = Colors.violet }: ToggleRowProps) {
+  return (
+    <View style={[styles.settingItem, disabled && styles.settingItemDisabled]}>
+      <View style={[styles.settingIconContainer, { backgroundColor: Colors.overlayViolet15 }]}>
+        {icon}
+      </View>
+      <View style={styles.settingInfo}>
+        <Text style={styles.settingTitle}>{title}</Text>
+        <Text style={styles.settingSubtitle}>{subtitle}</Text>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        trackColor={{ false: Colors.card, true: activeColor }}
+        thumbColor={Colors.white}
+        disabled={disabled}
+      />
+    </View>
+  );
 }
 
 export default function AISettingsScreen() {
   const { t } = useTranslation();
   const { settings, updateSettings } = useAppStore();
+  const debugEntryCount = useAiDebugStore((state) => state.entries.length);
+  const [pollinationStatus, setPollinationStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+  const [modelPickerVisible, setModelPickerVisible] = useState(false);
+  const [tonePickerVisible, setTonePickerVisible] = useState(false);
+  const [debugLogVisible, setDebugLogVisible] = useState(false);
 
-  // Safety lock: keep every AI path disabled even if old persisted values exist.
-  useEffect(() => {
-    const shouldForceDisable =
-      (settings.aiFeaturesEnabled ?? false) ||
-      (settings.aiProgressEnabled ?? false) ||
-      (settings.aiWorkoutEnabled ?? false) ||
-      (settings.ploppyEnabled ?? false) ||
-      (settings.pollinationConnected ?? false) ||
-      (settings.sharePersonalWithAI ?? false) ||
-      !(settings.ploppyOnboardingShown ?? true);
+  const aiEnabled = settings.aiFeaturesEnabled ?? false;
+  const connected = pollinationStatus === 'connected';
+  const featuresLocked = !aiEnabled || !connected;
 
-    if (!shouldForceDisable) {
-      return;
+  // Re-check the key each time the screen is shown (the OAuth callback lands on another route).
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      void isPollinationConnected().then((isConnected) => {
+        if (cancelled) return;
+        setPollinationStatus(isConnected ? 'connected' : 'disconnected');
+        updateSettings({ pollinationConnected: isConnected });
+      });
+      return () => { cancelled = true; };
+    }, [updateSettings]),
+  );
+
+  const handleConnectPollination = useCallback(async () => {
+    try {
+      await startPollinationAuth();
+    } catch (error) {
+      Alert.alert(t('common.error'), `${t('settings.pollination.errorMessage')}\n\n${String(error)}`);
     }
+  }, [t]);
 
-    updateSettings({
-      aiFeaturesEnabled: false,
-      aiProgressEnabled: false,
-      aiWorkoutEnabled: false,
-      ploppyEnabled: false,
-      pollinationConnected: false,
-      sharePersonalWithAI: false,
-      ploppyOnboardingShown: true,
-    });
-  }, [
-    settings.aiFeaturesEnabled,
-    settings.aiProgressEnabled,
-    settings.aiWorkoutEnabled,
-    settings.ploppyEnabled,
-    settings.pollinationConnected,
-    settings.sharePersonalWithAI,
-    settings.ploppyOnboardingShown,
-    updateSettings,
-  ]);
-
-  const lockedFeatures = useMemo<LockedFeature[]>(() => [
-    {
-      id: 'run-analysis',
-      title: t('settings.ai.featureTitles.runAnalysis'),
-      description: t('settings.ai.featureDescriptions.runAnalysis'),
-      icon: <Footprints size={18} color={Colors.blue} />,
-    },
-    {
-      id: 'workout-analysis',
-      title: t('settings.ai.featureTitles.workoutAnalysis'),
-      description: t('settings.ai.featureDescriptions.workoutAnalysis'),
-      icon: <Dumbbell size={18} color={Colors.violet} />,
-    },
-    {
-      id: 'meal-analysis',
-      title: t('settings.ai.featureTitles.mealAnalysis'),
-      description: t('settings.ai.featureDescriptions.mealAnalysis'),
-      icon: <UtensilsCrossed size={18} color={Colors.gold} />,
-    },
-    {
-      id: 'weekly-summary',
-      title: t('settings.ai.featureTitles.weeklySummary'),
-      description: t('settings.ai.featureDescriptions.weeklySummary'),
-      icon: <Activity size={18} color={Colors.success} />,
-    },
-    {
-      id: 'coaching',
-      title: t('settings.ai.featureTitles.coaching'),
-      description: t('settings.ai.featureDescriptions.coaching'),
-      icon: <Heart size={18} color={Colors.rose} />,
-    },
-  ], [t]);
+  const handleDisconnectPollination = useCallback(() => {
+    Alert.alert(
+      t('settings.pollination.disconnectTitle'),
+      t('settings.pollination.disconnectMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.pollination.disconnect'),
+          style: 'destructive',
+          onPress: async () => {
+            await removePollinationApiKey();
+            setPollinationStatus('disconnected');
+            updateSettings({ pollinationConnected: false });
+          },
+        },
+      ],
+    );
+  }, [t, updateSettings]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <LinearGradient
-        colors={[Colors.overlayViolet15, Colors.overlayWarning10, Colors.transparent]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.topGlow}
-      />
-
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeIn.delay(40)} style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
+        {/* Header */}
+        <Animated.View entering={FadeIn.delay(50)} style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <ArrowLeft size={24} color={Colors.text} />
           </TouchableOpacity>
-
-          <View style={styles.titleWrap}>
-            <Text style={styles.eyebrow}>{t('settings.ai.screenBrand')}</Text>
-            <Text style={styles.screenTitle}>{t('settings.ai.screenTitle')}</Text>
-          </View>
-
-          <View style={styles.lockBadge}>
-            <Lock size={12} color={Colors.warningDeep} />
-            <Text style={styles.lockBadgeText}>{t('settings.ai.statusBadge')}</Text>
+          <Text style={styles.screenTitle}>{t('settings.aiTab')}</Text>
+          <View style={styles.betaBadge}>
+            <Text style={styles.betaBadgeText}>{t('common.badge.beta')}</Text>
           </View>
         </Animated.View>
 
+        {/* AI Info Card */}
         <Animated.View entering={FadeInDown.delay(80).springify()}>
-          <GlassCard style={styles.heroCard}>
-            <LinearGradient
-              colors={[Colors.overlayViolet20, Colors.overlayWarning10]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroGradient}
-            />
-
-            <View style={styles.heroHeader}>
-              <View style={styles.heroIconWrap}>
-                <Bot size={20} color={Colors.violet} />
-              </View>
-              <Text style={styles.heroTitle}>{t('settings.ai.hero.title')}</Text>
-            </View>
-
-            <Text style={styles.heroText}>{t('settings.ai.hero.description')}</Text>
-
-            <View style={styles.heroFooter}>
-              <Sparkles size={14} color={Colors.warning} />
-              <Text style={styles.heroFooterText}>{t('settings.ai.hero.note')}</Text>
+          <GlassCard style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <Info size={18} color={Colors.violet} />
+              <Text style={styles.infoText}>{t('settings.ai.pollinationsInfo')}</Text>
             </View>
           </GlassCard>
         </Animated.View>
 
-        
-
-        <Text style={styles.sectionTitle}>{t('settings.ai.featuresTitle')}</Text>
-
-        <GlassCard style={styles.featuresCard}>
-          {lockedFeatures.map((feature, index) => (
-            <Animated.View
-              key={feature.id}
-              entering={FadeInDown.delay(150 + index * 40).springify()}
-              style={[styles.featureRow, index === lockedFeatures.length - 1 && styles.featureRowLast]}
-            >
-              <View style={styles.featureIconWrap}>
-                {feature.icon}
-              </View>
-
-              <View style={styles.featureTextWrap}>
-                <Text style={styles.featureTitle}>{feature.title}</Text>
-                <Text style={styles.featureDesc}>{feature.description}</Text>
-              </View>
-
-              <View style={styles.disabledChip}>
-                <Text style={styles.disabledChipText}>{t('settings.ai.disabledChip')}</Text>
-              </View>
-            </Animated.View>
-          ))}
+        {/* Master switch */}
+        <GlassCard style={styles.settingsCard}>
+          <ToggleRow
+            icon={<Power size={20} color={Colors.violet} />}
+            title={t('settings.ai.masterToggle')}
+            subtitle={t('settings.ai.masterToggleDesc')}
+            value={aiEnabled}
+            onValueChange={(value) => updateSettings({ aiFeaturesEnabled: value })}
+          />
         </GlassCard>
 
-        <View style={{ height: 50 }} />
+        {/* Pollination Connection */}
+        <Text style={styles.sectionTitle}>{t('settings.pollination.sectionTitle')}</Text>
+
+        <GlassCard style={styles.settingsCard}>
+          <View style={styles.settingItem}>
+            <View
+              style={[
+                styles.settingIconContainer,
+                { backgroundColor: connected ? Colors.overlayConnected15 : Colors.overlayViolet15 },
+              ]}
+            >
+              <Sparkles size={20} color={connected ? Colors.successStrong : Colors.violetStrong} />
+            </View>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingTitle}>{t('settings.pollination.title')}</Text>
+              <View style={styles.statusRow}>
+                {connected ? (
+                  <>
+                    <CheckCircle size={14} color={Colors.successStrong} />
+                    <Text style={[styles.statusText, { color: Colors.successStrong }]}>
+                      {t('settings.pollination.connected')}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <XCircle size={14} color={Colors.muted} />
+                    <Text style={styles.statusText}>{t('settings.pollination.notConnected')}</Text>
+                  </>
+                )}
+              </View>
+            </View>
+            <TouchableOpacity
+              style={[styles.connectButton, connected && styles.disconnectButton]}
+              onPress={connected ? handleDisconnectPollination : handleConnectPollination}
+            >
+              {connected ? (
+                <Text style={styles.disconnectButtonText}>{t('settings.pollination.disconnect')}</Text>
+              ) : (
+                <>
+                  <ExternalLink size={14} color={Colors.white} />
+                  <Text style={styles.connectButtonText}>{t('settings.pollination.connect')}</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.warningBox}>
+            <AlertTriangle size={16} color={Colors.warning} />
+            <Text style={styles.warningText}>{t('settings.pollination.betaWarning')}</Text>
+          </View>
+        </GlassCard>
+
+        {/* AI Features */}
+        <Text style={styles.sectionTitle}>{t('settings.ai.title')}</Text>
+
+        <GlassCard style={styles.settingsCard}>
+          <ToggleRow
+            icon={<Bot size={20} color={Colors.violet} />}
+            title={t('settings.ai.toggleProgress')}
+            subtitle={t('settings.ai.toggleProgressDesc')}
+            value={settings.aiProgressEnabled ?? false}
+            onValueChange={(value) => updateSettings({ aiProgressEnabled: value })}
+            disabled={featuresLocked}
+          />
+          <ToggleRow
+            icon={<Sparkles size={20} color={Colors.violet} />}
+            title={t('settings.ai.toggleWorkout')}
+            subtitle={t('settings.ai.toggleWorkoutDesc')}
+            value={settings.aiWorkoutEnabled ?? false}
+            onValueChange={(value) => updateSettings({ aiWorkoutEnabled: value })}
+            disabled={featuresLocked}
+          />
+          <ToggleRow
+            icon={<UtensilsCrossed size={20} color={Colors.violet} />}
+            title={t('settings.ai.toggleMeal')}
+            subtitle={t('settings.ai.toggleMealDesc')}
+            value={settings.ploppyEnabled ?? false}
+            onValueChange={(value) => updateSettings({ ploppyEnabled: value })}
+            disabled={featuresLocked}
+          />
+
+          {/* Model Selector */}
+          <View style={[styles.settingItem, featuresLocked && styles.settingItemDisabled]}>
+            <View style={[styles.settingIconContainer, { backgroundColor: Colors.overlayViolet15 }]}>
+              <ChevronDown size={20} color={Colors.violet} />
+            </View>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingTitle}>{t('settings.ai.modelLabel')}</Text>
+              <Text style={styles.settingSubtitle}>{t('settings.ai.modelDesc')}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.modelPicker}
+              onPress={() => setModelPickerVisible(true)}
+              disabled={featuresLocked}
+            >
+              <Text style={styles.modelPickerText}>
+                {POLLINATION_MODELS.find((m) => m.id === (settings.aiModel || 'openai'))?.label ?? settings.aiModel}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Tone selector */}
+          <View style={[styles.settingItem, featuresLocked && styles.settingItemDisabled]}>
+            <View style={[styles.settingIconContainer, { backgroundColor: Colors.overlayViolet15 }]}>
+              <Activity size={20} color={Colors.violet} />
+            </View>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingTitle}>{t('settings.ai.toneLabel')}</Text>
+              <Text style={styles.settingSubtitle}>{t('settings.ai.toneDesc')}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.modelPicker}
+              onPress={() => setTonePickerVisible(true)}
+              disabled={featuresLocked}
+            >
+              <Text style={styles.modelPickerText}>
+                {t(`settings.ai.toneOptions.${settings.aiTone ?? 'neutral'}`)}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {featuresLocked && (
+            <View style={styles.featureInfo}>
+              <Text style={styles.featureInfoText}>
+                {aiEnabled ? t('workout.ai.connectRequired') : t('settings.ai.masterOffHint')}
+              </Text>
+            </View>
+          )}
+        </GlassCard>
+
+        {/* Debug */}
+        <Text style={styles.sectionTitle}>{t('settings.ai.debugTitle')}</Text>
+
+        <GlassCard style={styles.settingsCard}>
+          <ToggleRow
+            icon={<Bug size={20} color={Colors.warning} />}
+            title={t('settings.ai.debugToggle')}
+            subtitle={t('settings.ai.debugToggleDesc')}
+            value={settings.aiDebugEnabled ?? false}
+            onValueChange={(value) => updateSettings({ aiDebugEnabled: value })}
+            activeColor={Colors.warning}
+          />
+          <TouchableOpacity style={styles.settingItem} onPress={() => setDebugLogVisible(true)}>
+            <View style={[styles.settingIconContainer, { backgroundColor: Colors.overlayWarning15 }]}>
+              <Bug size={20} color={Colors.warning} />
+            </View>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingTitle}>{t('settings.ai.debugOpen')}</Text>
+              <Text style={styles.settingSubtitle}>
+                {t('settings.ai.debugCount', { count: debugEntryCount })}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </GlassCard>
+
+        {/* Privacy */}
+        <Text style={styles.sectionTitle}>{t('settings.ai.privacyTitle')}</Text>
+
+        <GlassCard style={styles.settingsCard}>
+          <View style={styles.privacyBox}>
+            <Shield size={18} color={Colors.success} />
+            <Text style={styles.privacyText}>{t('settings.ai.privacyText')}</Text>
+          </View>
+          <TouchableOpacity style={styles.privacyLink} onPress={() => router.push('/privacy-policy')}>
+            <Text style={styles.privacyLinkText}>{t('settings.ai.seePrivacyPolicy')}</Text>
+          </TouchableOpacity>
+        </GlassCard>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Model Picker Modal */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={modelPickerVisible}
+        onRequestClose={() => setModelPickerVisible(false)}
+      >
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setModelPickerVisible(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('settings.ai.selectModelTitle')}</Text>
+            <ScrollView>
+              {POLLINATION_MODELS.map((m) => {
+                const selected = (settings.aiModel || 'openai') === m.id;
+                return (
+                  <TouchableOpacity
+                    key={m.id}
+                    style={[styles.modelOption, selected && styles.modelOptionSelected]}
+                    onPress={() => { updateSettings({ aiModel: m.id }); setModelPickerVisible(false); }}
+                  >
+                    <Text style={selected ? styles.modelOptionTextSelected : styles.modelOptionText}>{m.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Tone Picker Modal */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={tonePickerVisible}
+        onRequestClose={() => setTonePickerVisible(false)}
+      >
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setTonePickerVisible(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('settings.ai.toneLabel')}</Text>
+            {(['technical', 'neutral', 'warm'] as const).map((tone) => {
+              const selected = (settings.aiTone ?? 'neutral') === tone;
+              return (
+                <TouchableOpacity
+                  key={tone}
+                  style={[styles.modelOption, selected && styles.modelOptionSelected]}
+                  onPress={() => { updateSettings({ aiTone: tone }); setTonePickerVisible(false); }}
+                >
+                  <Text style={selected ? styles.modelOptionTextSelected : styles.modelOptionText}>
+                    {t(`settings.ai.toneOptions.${tone}`)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      <AiDebugModal visible={debugLogVisible} onClose={() => setDebugLogVisible(false)} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.bg,
-  },
-  topGlow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 260,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: Spacing.lg,
-    paddingBottom: 100,
-  },
+  container: { flex: 1, backgroundColor: Colors.bg },
+  scrollView: { flex: 1 },
+  content: { padding: Spacing.lg, paddingBottom: 100 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.xl,
-    gap: Spacing.md,
+    flexDirection: 'row', alignItems: 'center',
+    marginBottom: Spacing.xl, gap: Spacing.md,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 44, height: 44, borderRadius: 14,
     backgroundColor: Colors.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  titleWrap: {
-    flex: 1,
-  },
-  eyebrow: {
-    fontSize: 10,
-    color: Colors.warning,
-    fontWeight: FontWeight.bold,
-    letterSpacing: 2,
-    marginBottom: 2,
+    justifyContent: 'center', alignItems: 'center',
   },
   screenTitle: {
-    fontSize: 26,
-    fontWeight: FontWeight.bold,
-    color: Colors.text,
+    fontSize: FontSize.xxxl, fontWeight: FontWeight.bold,
+    color: Colors.text, flex: 1,
   },
-  lockBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.md,
+  betaBadge: {
     backgroundColor: Colors.overlayWarning15,
-    borderWidth: 1,
-    borderColor: Colors.overlayWarning20,
+    paddingHorizontal: Spacing.sm, paddingVertical: 4,
+    borderRadius: BorderRadius.md,
   },
-  lockBadgeText: {
-    fontSize: 10,
-    fontWeight: FontWeight.bold,
-    color: Colors.warningDeep,
-    letterSpacing: 1,
-  },
-  heroCard: {
-    marginBottom: Spacing.md,
-    padding: Spacing.md,
-    overflow: 'hidden',
-  },
-  heroGradient: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.55,
-  },
-  heroHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  heroIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: Colors.overlayViolet15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroTitle: {
-    flex: 1,
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-    color: Colors.text,
-  },
-  heroText: {
-    fontSize: FontSize.sm,
-    color: Colors.text,
-    lineHeight: 20,
-    opacity: 0.92,
-  },
-  heroFooter: {
-    marginTop: Spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  heroFooterText: {
-    flex: 1,
-    fontSize: FontSize.xs,
-    color: Colors.warning,
-  },
-  switchCard: {
-    marginBottom: Spacing.lg,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.md,
-  },
-  switchInfo: {
-    flex: 1,
-  },
-  switchTitle: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.semibold,
-    color: Colors.text,
-  },
-  switchSubtitle: {
-    marginTop: 2,
-    fontSize: FontSize.xs,
-    color: Colors.muted,
+  betaBadgeText: {
+    fontSize: 10, fontWeight: FontWeight.extrabold,
+    color: Colors.warningDeep, letterSpacing: 1.5,
   },
   sectionTitle: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-    color: Colors.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    fontSize: FontSize.sm, fontWeight: FontWeight.semibold,
+    color: Colors.muted, textTransform: 'uppercase',
+    letterSpacing: 1, marginTop: Spacing.lg,
+    marginBottom: Spacing.md, marginLeft: Spacing.xs,
+  },
+  settingsCard: {
     marginBottom: Spacing.md,
-    marginLeft: Spacing.xs,
+    paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs,
   },
-  featuresCard: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+  infoCard: {
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.md,
   },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.overlay,
+  infoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm },
+  infoText: { flex: 1, fontSize: FontSize.sm, color: Colors.muted, lineHeight: 20 },
+  settingItem: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: Spacing.md, paddingHorizontal: Spacing.sm,
+    gap: Spacing.md,
   },
-  featureRowLast: {
-    borderBottomWidth: 0,
+  settingItemDisabled: { opacity: 0.5 },
+  settingIconContainer: {
+    width: 40, height: 40, borderRadius: 12,
+    justifyContent: 'center', alignItems: 'center',
   },
-  featureIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.overlay,
+  settingInfo: { flex: 1 },
+  settingTitle: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.text },
+  settingSubtitle: { fontSize: FontSize.xs, color: Colors.muted, marginTop: 2 },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  statusText: { fontSize: FontSize.xs, color: Colors.muted },
+  connectButton: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: Colors.violetStrong,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.lg,
   },
-  featureTextWrap: {
-    flex: 1,
+  connectButtonText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, color: Colors.white },
+  disconnectButton: {
+    backgroundColor: Colors.overlayError15,
+    borderWidth: 1, borderColor: Colors.overlayError30,
   },
-  featureTitle: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.semibold,
-    color: Colors.text,
+  disconnectButtonText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, color: Colors.errorStrong },
+  warningBox: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm,
+    backgroundColor: Colors.overlayWarning10,
+    paddingVertical: Spacing.md, paddingHorizontal: Spacing.md,
+    marginHorizontal: Spacing.sm, marginBottom: Spacing.sm,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1, borderColor: Colors.overlayWarning20,
   },
-  featureDesc: {
-    marginTop: 1,
-    fontSize: FontSize.xs,
-    color: Colors.muted,
-    lineHeight: 17,
+  warningText: { flex: 1, fontSize: FontSize.xs, color: Colors.warning, lineHeight: 18 },
+  featureInfo: {
+    backgroundColor: Colors.overlayTeal10,
+    paddingVertical: Spacing.md, paddingHorizontal: Spacing.md,
+    marginHorizontal: Spacing.sm, marginBottom: Spacing.sm,
+    borderRadius: BorderRadius.lg,
   },
-  disabledChip: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.overlayWarning15,
-    borderWidth: 1,
-    borderColor: Colors.overlayWarning20,
+  featureInfoText: { fontSize: FontSize.xs, color: Colors.teal, lineHeight: 18 },
+  modelPicker: {
+    backgroundColor: Colors.overlayViolet12,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1, borderColor: Colors.overlayViolet25,
   },
-  disabledChipText: {
-    fontSize: 10,
-    color: Colors.warningDeep,
-    fontWeight: FontWeight.bold,
-    letterSpacing: 0.4,
+  modelPickerText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, color: Colors.violet },
+  privacyBox: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm,
+    backgroundColor: Colors.overlaySuccess08,
+    padding: Spacing.md, marginHorizontal: Spacing.sm,
+    marginBottom: Spacing.sm, borderRadius: BorderRadius.lg,
+    borderWidth: 1, borderColor: Colors.overlaySuccess15,
   },
+  privacyText: { flex: 1, fontSize: FontSize.xs, color: Colors.success, lineHeight: 18 },
+  privacyLink: {
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    marginHorizontal: Spacing.sm, marginBottom: Spacing.sm,
+  },
+  privacyLinkText: { fontSize: FontSize.sm, color: Colors.violet, textDecorationLine: 'underline' },
+  modalOverlay: {
+    flex: 1, backgroundColor: Colors.overlayBlack50,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: Colors.cardSolid, padding: Spacing.lg,
+    borderRadius: BorderRadius.xxl, width: '85%', maxHeight: '70%',
+  },
+  modalTitle: {
+    fontSize: FontSize.xl, fontWeight: FontWeight.bold,
+    color: Colors.text, marginBottom: Spacing.md, textAlign: 'center',
+  },
+  modelOption: {
+    paddingVertical: Spacing.md, paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.lg,
+  },
+  modelOptionSelected: { backgroundColor: Colors.overlayViolet20 },
+  modelOptionText: { fontSize: FontSize.xl, color: Colors.text },
+  modelOptionTextSelected: { fontSize: FontSize.xl, color: Colors.violet, fontWeight: FontWeight.bold },
 });

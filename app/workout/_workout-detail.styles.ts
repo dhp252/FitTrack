@@ -288,7 +288,7 @@ export const styles = StyleSheet.create({
   },
   aiHeader: { flexDirection: 'row', alignItems: 'center', gap: S.sm },
   aiTitle: { fontSize: T.md, fontWeight: W.bold, color: C.violet },
-  aiText: { fontSize: T.sm, color: C.textSub, lineHeight: T.sm * 1.7, fontStyle: 'italic' },
+  aiText: { fontSize: T.lg, color: C.text, lineHeight: T.lg * 1.6 },
   aiLoading: { flexDirection: 'row', alignItems: 'center', gap: S.md, paddingVertical: S.md },
   aiLoadingText: { fontSize: T.sm, color: C.textMuted },
   aiDisabled: { paddingVertical: S.md, gap: S.xs },

@@ -1132,7 +1132,18 @@
         "coaching": "Consigli contestuali per mantenere la regolarità e migliorare il recupero."
       },
       "disabledChip": "Disattivato",
-      "statusBadge": "PAUSE"
+      "statusBadge": "PAUSE",
+      "masterToggle": "Attiva funzioni IA",
+      "masterToggleDesc": "Interruttore generale di Ploppy. Usa il tuo account Pollinations.",
+      "masterOffHint": "Attiva prima «Attiva funzioni IA» qui sopra.",
+      "toggleMeal": "Punteggio IA delle foto dei pasti",
+      "toggleMealDesc": "Valuta le foto dei pasti nella pagina pasto avanzata",
+      "debugTitle": "Debug",
+      "debugToggle": "Modalità debug IA",
+      "debugToggleDesc": "Registra ogni richiesta, risposta ed errore IA su questo dispositivo per capire cosa non va. Solo in memoria, chiavi nascoste.",
+      "debugOpen": "Apri il registro debug IA",
+      "debugCount_one": "{{count}} chiamata registrata",
+      "debugCount_other": "{{count}} chiamate registrate"
     },
     "pollination": {
       "sectionTitle": "ANALISI IA",
@@ -2201,7 +2212,8 @@
       "suggestion1": "Corsa leggera di 30 min",
       "suggestion2": "Ripetute sui 5K",
       "suggestion3": "Corsa lunga",
-      "step3Title": "Il tuo piano di corsa"
+      "step3Title": "Il tuo piano di corsa",
+      "fallbackPlanNotice": "L'IA non ha risposto, quindi questo è un piano base integrato. Attiva la modalità debug IA in Impostazioni → IA per capire perché."
     },
     "ready": "Pronto",
     "motivation": {
@@ -2468,6 +2480,41 @@
       "run": "Corsa",
       "beatsaber": "Beat Saber",
       "custom": "Sport personalizzato"
+    }
+  },
+  "ai": {
+    "reader": {
+      "expand": "Schermo intero",
+      "copy": "Copia testo"
+    },
+    "debug": {
+      "title": "Registro debug IA",
+      "hint": "Più recenti in alto. Cancellato al riavvio dell'app. Le chiavi API sono sostituite da [redacted]. Tocca una chiamata per vedere richiesta e risposta esatte; Copia fornisce un testo da incollare in una segnalazione.",
+      "empty": "Nessuna chiamata IA registrata. Avvia una funzione IA con la modalità debug attiva.",
+      "noCallYet": "Debug: nessuna chiamata IA",
+      "open": "Dettagli",
+      "endpoint": "Endpoint",
+      "request": "Richiesta",
+      "response": "Risposta",
+      "noResponse": "(nessuna risposta ricevuta)",
+      "copy": "Copia",
+      "copied": "Copiato",
+      "clear": "Svuota registro",
+      "cached": "dalla cache",
+      "status": {
+        "pending": "in corso",
+        "success": "OK",
+        "error": "fallita"
+      },
+      "features": {
+        "weekly-summary": "Riepilogo settimanale",
+        "workout-analysis": "Analisi allenamento",
+        "run-plan-questions": "Piano di corsa: domande",
+        "run-plan": "Piano di corsa",
+        "run-coach": "Coaching corsa",
+        "run-debrief": "Bilancio corsa",
+        "meal-photo": "Punteggio foto pasto"
+      }
     }
   }
 }

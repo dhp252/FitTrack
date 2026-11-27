@@ -129,3 +129,16 @@ export const MAX_USERNAME_LENGTH = 20;
 
 /** Longueur minimum du mot de passe */
 export const MIN_PASSWORD_LENGTH = 6;
+
+// ============================================================================
+// IA (POLLINATIONS)
+// ============================================================================
+
+/** Timeout d'une requête texte/image vers Pollinations (ms) */
+export const AI_REQUEST_TIMEOUT_MS = 20000;
+
+/** Nombre maximum d'appels IA gardés dans le journal de debug (mémoire uniquement) */
+export const AI_DEBUG_MAX_ENTRIES = 30;
+
+/** Taille maximum (caractères) d'une requête ou réponse gardée dans le journal de debug */
+export const AI_DEBUG_MAX_CHARS = 20000;

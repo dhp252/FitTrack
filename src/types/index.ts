@@ -311,6 +311,7 @@ export interface UserSettings {
   aiModel?: string; // Pollinations model name (default: 'openai')
   aiTone?: 'technical' | 'neutral' | 'warm'; // Style of Ploppy's responses
   sharePersonalWithAI?: boolean; // Share personal info with Ploppy for personalized sessions
+  aiDebugEnabled?: boolean; // Record AI requests/responses/errors in an in-memory debug log
 
   // Personal information (optional, may be shared with analysis services)
   gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';

@@ -1132,7 +1132,18 @@
         "coaching": "Kontextbezogene Tipps, um die Regelmäßigkeit zu halten und die Erholung zu verbessern."
       },
       "disabledChip": "Deaktiviert",
-      "statusBadge": "PAUSE"
+      "statusBadge": "PAUSE",
+      "masterToggle": "KI-Funktionen aktivieren",
+      "masterToggleDesc": "Hauptschalter für alle Ploppy-Funktionen. Nutzt dein eigenes Pollinations-Konto.",
+      "masterOffHint": "Aktiviere zuerst oben „KI-Funktionen aktivieren“.",
+      "toggleMeal": "KI-Bewertung von Mahlzeitfotos",
+      "toggleMealDesc": "Bewertet Mahlzeitfotos auf der erweiterten Mahlzeitenseite",
+      "debugTitle": "Debug",
+      "debugToggle": "KI-Debugmodus",
+      "debugToggleDesc": "Speichert jede KI-Anfrage, Antwort und jeden Fehler auf diesem Gerät, damit du siehst, was schiefging. Nur im Speicher, Schlüssel verborgen.",
+      "debugOpen": "KI-Debugprotokoll öffnen",
+      "debugCount_one": "{{count}} Aufruf gespeichert",
+      "debugCount_other": "{{count}} Aufrufe gespeichert"
     },
     "pollination": {
       "sectionTitle": "KI-ANALYSE",
@@ -2201,7 +2212,8 @@
       "suggestion1": "Leichter 30 Min. Lauf",
       "suggestion2": "Intervall-Lauf (5 km)",
       "suggestion3": "Langer Lauf",
-      "step3Title": "Dein Laufplan"
+      "step3Title": "Dein Laufplan",
+      "fallbackPlanNotice": "Die KI hat nicht geantwortet, daher ist dies ein einfacher integrierter Plan. Aktiviere den KI-Debugmodus unter Einstellungen → KI, um den Grund zu sehen."
     },
     "ready": "Bereit",
     "motivation": {
@@ -2468,6 +2480,41 @@
       "run": "Lauf",
       "beatsaber": "Beat Saber",
       "custom": "Eigener Sport"
+    }
+  },
+  "ai": {
+    "reader": {
+      "expand": "Vollbild",
+      "copy": "Text kopieren"
+    },
+    "debug": {
+      "title": "KI-Debugprotokoll",
+      "hint": "Neueste zuerst. Wird beim Neustart der App gelöscht. API-Schlüssel werden durch [redacted] ersetzt. Tippe auf einen Aufruf, um Anfrage und Antwort zu sehen; Kopieren liefert Text für einen Fehlerbericht.",
+      "empty": "Noch keine KI-Aufrufe gespeichert. Starte eine KI-Funktion mit aktivem Debugmodus.",
+      "noCallYet": "Debug: noch kein KI-Aufruf",
+      "open": "Details",
+      "endpoint": "Endpunkt",
+      "request": "Anfrage",
+      "response": "Antwort",
+      "noResponse": "(keine Antwort erhalten)",
+      "copy": "Kopieren",
+      "copied": "Kopiert",
+      "clear": "Protokoll leeren",
+      "cached": "aus dem Cache",
+      "status": {
+        "pending": "läuft",
+        "success": "OK",
+        "error": "fehlgeschlagen"
+      },
+      "features": {
+        "weekly-summary": "Wochenzusammenfassung",
+        "workout-analysis": "Trainingsanalyse",
+        "run-plan-questions": "Laufplan: Fragen",
+        "run-plan": "Laufplan",
+        "run-coach": "Lauf-Coaching",
+        "run-debrief": "Laufbilanz",
+        "meal-photo": "Mahlzeitfoto-Bewertung"
+      }
     }
   }
 }

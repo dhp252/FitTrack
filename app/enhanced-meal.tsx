@@ -52,6 +52,8 @@ import {
     Zap,
 } from 'lucide-react-native';
 import { CustomAlertModal } from '../src/components/ui';
+import { AiDebugPanel, AiExpandButton, AiTextReader } from '../src/components/ai';
+import { describeAiError, logAiDebugFailure } from '../src/services/pollination/aiDebugLog';
 import type { AlertButton } from '../src/components/ui';
 import { useAppStore } from '../src/stores';
 import { 
@@ -216,6 +218,7 @@ export default function EnhancedMealScreen() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [analysis, setAnalysis] = useState<MealAnalysis | null>(null);
+    const [readerOpen, setReaderOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     
     // Custom Alert State
@@ -383,7 +386,9 @@ export default function EnhancedMealScreen() {
             const uploadResult = await uploadImageToTmpFiles(selectedImage);
             
             if (!uploadResult.success || !uploadResult.url) {
-                throw new Error(uploadResult.error || 'upload_failed');
+                const uploadError = new Error(`Photo upload to tmpfiles.org failed: ${uploadResult.error || 'upload_failed'}`);
+                logAiDebugFailure('meal-photo', 'https://tmpfiles.org/api/v1/upload', uploadError);
+                throw uploadError;
             }
             
             setIsUploading(false);
@@ -405,14 +410,16 @@ export default function EnhancedMealScreen() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             showAlert(
                 t('enhancedMeal.analysisError'),
-                t('enhancedMeal.analysisErrorMessage'),
+                settings.aiDebugEnabled
+                    ? `${t('enhancedMeal.analysisErrorMessage')}\n\n${describeAiError(error)}`
+                    : t('enhancedMeal.analysisErrorMessage'),
                 'error'
             );
         } finally {
             setIsUploading(false);
             setIsAnalyzing(false);
         }
-    }, [selectedImage, additionalDetails, t, checkPollinationConnection, scoreScale, showAlert]);
+    }, [selectedImage, additionalDetails, t, checkPollinationConnection, scoreScale, showAlert, settings.aiDebugEnabled]);
 
     // Save meal
     const saveMeal = useCallback(() => {
@@ -729,6 +736,7 @@ export default function EnhancedMealScreen() {
                                         <View style={styles.scoreTitleRow}>
                                             <Star size={18} color={Colors.warning} fill={Colors.warning} />
                                             <Text style={styles.scoreTitle}>{analysis.title}</Text>
+                                            <AiExpandButton onPress={() => setReaderOpen(true)} />
                                         </View>
                                         <View style={[
                                             styles.scoreBadge,
@@ -788,8 +796,17 @@ export default function EnhancedMealScreen() {
                                     ))}
                                 </Animated.View>
                             )}
+                            <AiTextReader
+                                visible={readerOpen}
+                                title={`${analysis.title} · ${analysis.score}/100`}
+                                text={analysis.description}
+                                points={analysis.suggestions}
+                                onClose={() => setReaderOpen(false)}
+                            />
                         </Animated.View>
                     )}
+
+                    {ploppyEnabled && <AiDebugPanel feature="meal-photo" />}
 
                     {/* Manual Description - Premium Input */}
                     <Animated.View entering={FadeInDown.delay(400).duration(400)}>

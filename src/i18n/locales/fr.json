@@ -1132,7 +1132,18 @@
         "coaching": "Conseils contextuels pour garder la régularité et améliorer la récupération."
       },
       "disabledChip": "Désactivé",
-      "statusBadge": "PAUSE"
+      "statusBadge": "PAUSE",
+      "masterToggle": "Activer les fonctions IA",
+      "masterToggleDesc": "Interrupteur général de Ploppy. Utilise ton propre compte Pollinations.",
+      "masterOffHint": "Active d'abord « Activer les fonctions IA » ci-dessus.",
+      "toggleMeal": "Score IA des photos de repas",
+      "toggleMealDesc": "Note les photos de repas sur la page repas avancée",
+      "debugTitle": "Débogage",
+      "debugToggle": "Mode debug IA",
+      "debugToggleDesc": "Enregistre chaque requête, réponse et erreur IA sur cet appareil pour comprendre ce qui ne va pas. En mémoire uniquement, clés masquées.",
+      "debugOpen": "Ouvrir le journal debug IA",
+      "debugCount_one": "{{count}} appel enregistré",
+      "debugCount_other": "{{count}} appels enregistrés"
     },
     "pollination": {
       "sectionTitle": "ANALYSE IA",
@@ -2201,7 +2212,8 @@
       "suggestion1": "Course tranquille 30 min",
       "suggestion2": "Fractionné 5 km",
       "suggestion3": "Sortie longue",
-      "step3Title": "Ton plan de course"
+      "step3Title": "Ton plan de course",
+      "fallbackPlanNotice": "L'IA n'a pas répondu : voici un plan de base intégré. Active le mode debug IA dans Réglages → IA pour savoir pourquoi."
     },
     "ready": "Prêt",
     "motivation": {
@@ -2468,6 +2480,41 @@
       "run": "Course",
       "beatsaber": "Beat Saber",
       "custom": "Sport personnalisé"
+    }
+  },
+  "ai": {
+    "reader": {
+      "expand": "Plein écran",
+      "copy": "Copier le texte"
+    },
+    "debug": {
+      "title": "Journal debug IA",
+      "hint": "Plus récent en premier. Effacé au redémarrage de l'app. Les clés API sont remplacées par [redacted]. Touche un appel pour voir la requête et la réponse exactes ; Copier donne un texte à coller dans un rapport de bug.",
+      "empty": "Aucun appel IA enregistré. Lance une fonction IA avec le mode debug activé.",
+      "noCallYet": "Debug : aucun appel IA",
+      "open": "Détails",
+      "endpoint": "Adresse",
+      "request": "Requête",
+      "response": "Réponse",
+      "noResponse": "(aucune réponse reçue)",
+      "copy": "Copier",
+      "copied": "Copié",
+      "clear": "Vider le journal",
+      "cached": "depuis le cache",
+      "status": {
+        "pending": "en cours",
+        "success": "OK",
+        "error": "échec"
+      },
+      "features": {
+        "weekly-summary": "Résumé hebdo",
+        "workout-analysis": "Analyse de séance",
+        "run-plan-questions": "Plan de course : questions",
+        "run-plan": "Plan de course",
+        "run-coach": "Coaching course",
+        "run-debrief": "Bilan de course",
+        "meal-photo": "Score photo repas"
+      }
     }
   }
 }

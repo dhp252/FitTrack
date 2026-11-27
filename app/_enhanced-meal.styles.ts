@@ -426,10 +426,10 @@ export const styles = StyleSheet.create({
         color: PREMIUM.gray400,
     },
     scoreDescription: {
-        fontSize: 14,
+        fontSize: 16,
         color: PREMIUM.gray200,
         textAlign: 'center',
-        lineHeight: 22,
+        lineHeight: 25,
     },
 
     suggestionsCard: {
@@ -476,9 +476,9 @@ export const styles = StyleSheet.create({
     },
     suggestionText: {
         flex: 1,
-        fontSize: 14,
+        fontSize: 16,
         color: PREMIUM.gray200,
-        lineHeight: 22,
+        lineHeight: 24,
     },
 
     descriptionContainer: {
